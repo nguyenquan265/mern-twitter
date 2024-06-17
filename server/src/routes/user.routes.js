@@ -9,7 +9,7 @@ import {
   updateMe,
   updatePassword,
   getUserProfile,
-  followUnfollowedUser
+  followUnfollowUser
 } from '~/controllers/user.controller'
 import { protect, restrictTo } from '~/middlewares/auth.middleware'
 import { upload } from '~/utils/cloudinary'
@@ -24,7 +24,7 @@ router.use(protect)
 router.route('/me').get(getMe, getUser)
 router.route('/profile/:username').get(getUserProfile)
 // router.route('/suggested').get(getUserProfile)
-router.route('/follow/:id').post(followUnfollowedUser)
+router.route('/follow/:id').post(followUnfollowUser)
 // router.post('/update').post(updateUserProfile)
 // router.route('/updateMyPassword').patch(updatePassword)
 // router.route('/updateMe').patch(upload.single('photo'), updateMe)

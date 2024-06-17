@@ -14,6 +14,7 @@ import util from 'util'
 import path from 'path'
 import { cloudinary } from '~/utils/cloudinary'
 import { filterObj } from '~/utils/filterObject'
+import { Notification } from '~/models/notification.model'
 
 const writeFile = util.promisify(fs.writeFile)
 
@@ -38,7 +39,7 @@ export const getUserProfile = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success', user })
 })
 
-export const followUnfollowedUser = catchAsync(async (req, res, next) => {
+export const followUnfollowUser = catchAsync(async (req, res, next) => {
   const [user, currentUser] = await Promise.all([
     User.findById(req.params.id),
     User.findById(req.user.id)
@@ -56,6 +57,7 @@ export const followUnfollowedUser = catchAsync(async (req, res, next) => {
     currentUser.following.pull(user._id)
     user.followers.pull(currentUser._id)
 
+    await Promise.all([user.save(), currentUser.save()])
     // await Promise.all([
     //   User.findByIdAndUpdate(user._id, {
     //     $pull: { followers: currentUser._id }
@@ -68,6 +70,13 @@ export const followUnfollowedUser = catchAsync(async (req, res, next) => {
     currentUser.following.push(user._id)
     user.followers.push(currentUser._id)
 
+    await Promise.all([user.save(), currentUser.save()])
+
+    await Notification.create({
+      from: currentUser._id,
+      to: user._id,
+      type: 'follow'
+    })
     // await Promise.all([
     //   User.findByIdAndUpdate(user._id, {
     //     $push: { followers: currentUser._id }
@@ -77,8 +86,6 @@ export const followUnfollowedUser = catchAsync(async (req, res, next) => {
     //   })
     // ])
   }
-
-  await Promise.all([user.save(), currentUser.save()])
 
   res.status(200).json({ status: 'success' })
 })

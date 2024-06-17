@@ -4,9 +4,14 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
 const userSchema = new mongoose.Schema({
-  name: {
+  username: {
     type: String,
-    required: [true, 'Name is required']
+    unique: true,
+    required: [true, 'Username is required']
+  },
+  fullname: {
+    type: String,
+    required: [true, 'Fullname is required']
   },
   email: {
     type: String,
@@ -15,43 +20,63 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email']
   },
-  photo: {
-    type: String,
-    default: 'default.jpg'
-  },
-  photo_publicId: {
-    type: String,
-    default: ''
-  },
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: 8,
     select: false
   },
-  passwordConfirm: {
-    type: String,
-    required: [true, 'Please confirm your password'],
-    validate: {
-      validator: function (el) {
-        return el === this.password
-      },
-      message: 'Passwords are not the same'
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: []
     }
+  ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: []
+    }
+  ],
+  profileImg: {
+    type: String,
+    default: 'default.jpg'
   },
-  passwordChangedAt: Date,
+  profileImg_publicId: {
+    type: String,
+    default: ''
+  },
+  coverImg: {
+    type: String,
+    default: 'default-cover.jpg'
+  },
+  coverImg_publicId: {
+    type: String,
+    default: ''
+  },
+  bio: {
+    type: String,
+    default: ''
+  },
+  link: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
   },
+  passwordChangedAt: Date,
   passwordResetToken: String,
-  passwordResetExpires: Date,
-  active: {
-    type: Boolean,
-    default: true,
-    select: false
-  }
+  passwordResetExpires: Date
+  // active: {
+  //   type: Boolean,
+  //   default: true,
+  //   select: false
+  // }
 })
 
 // Encrypt password before saving
@@ -72,10 +97,10 @@ userSchema.pre('save', function (next) {
 })
 
 // Hide inactive users
-userSchema.pre(/^find/, function (next) {
-  this.find({ active: { $ne: false } })
-  next()
-})
+// userSchema.pre(/^find/, function (next) {
+//   this.find({ active: { $ne: false } })
+//   next()
+// })
 
 // Compare password
 userSchema.methods.correctPassword = async function (candidatePassword) {
@@ -83,18 +108,18 @@ userSchema.methods.correctPassword = async function (candidatePassword) {
 }
 
 // Check if password was changed after JWT was issued
-userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
-  if (this.passwordChangedAt) {
-    const changedTimestamp = parseInt(
-      this.passwordChangedAt.getTime() / 1000,
-      10
-    )
+// userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+//   if (this.passwordChangedAt) {
+//     const changedTimestamp = parseInt(
+//       this.passwordChangedAt.getTime() / 1000,
+//       10
+//     )
 
-    return JWTTimestamp < changedTimestamp
-  }
+//     return JWTTimestamp < changedTimestamp
+//   }
 
-  return false
-}
+//   return false
+// }
 
 // Create password reset token
 userSchema.methods.createPasswordResetToken = function () {

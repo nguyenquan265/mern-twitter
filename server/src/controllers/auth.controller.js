@@ -1,49 +1,54 @@
 /* eslint-disable no-unused-vars */
-import { sign, verify } from 'jsonwebtoken'
 import { env } from '~/config/env'
 import { User } from '~/models/user.model'
 import { ApiError } from '~/utils/ApiError'
 import Email from '~/utils/Email'
 import { catchAsync } from '~/utils/catchAsync'
 import crypto from 'crypto'
-
-const signAccessToken = (id) => {
-  return sign({ id }, env.jwt.ACCESS_TOKEN_SECRET, {
-    expiresIn: env.jwt.ACCESS_TOKEN_EXPIRY
-  })
-}
-
-const signRefreshToken = (id) => {
-  return sign({ id }, env.jwt.REFRESH_TOKEN_SECRET, {
-    expiresIn: env.jwt.REFRESH_TOKEN_EXPIRY
-  })
-}
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyToken
+} from '~/utils/generateToken'
 
 export const register = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body
+  const { username, fullname, email, password } = req.body
 
-  if (!name || !email || !password || !passwordConfirm) {
+  if (!username || !fullname || !email || !password) {
     throw new ApiError(400, 'Please provide all fields')
   }
 
-  const user = await User.create({ name, email, password, passwordConfirm })
+  const user = await User.create({ username, email, password })
 
   const { password: pass, ...rest } = user._doc
 
-  res.status(200).json({ status: 'success', user: rest })
+  const accessToken = signAccessToken(user._id)
+  const refreshToken = signRefreshToken(user._id)
+
+  res
+    .status(200)
+    .cookie('refreshToken', refreshToken, {
+      expires: new Date(
+        Date.now() + env.jwt.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    })
+    .json({ status: 'success', accessToken, user: rest })
 })
 
 export const login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body
+  const { username, password } = req.body
 
-  if (!email || !password) {
-    throw new ApiError(400, 'Please provide email and password')
+  if (!username || !password) {
+    throw new ApiError(400, 'Please provide username and password')
   }
 
-  const user = await User.findOne({ email }).select('+password')
+  const user = await User.findOne({ username }).select('+password')
 
   if (!user || !(await user.correctPassword(password))) {
-    throw new ApiError(400, 'Incorrect email or password or user is inactive')
+    throw new ApiError(400, 'Incorrect username or password')
   }
 
   const { password: pass, ...rest } = user._doc
@@ -77,7 +82,7 @@ export const refreshToken = catchAsync(async (req, res, next) => {
     throw new ApiError(401, 'RefreshToken not found')
   }
 
-  const decoded = verify(refreshToken, env.jwt.REFRESH_TOKEN_SECRET)
+  const decoded = verifyToken(refreshToken, env.jwt.REFRESH_TOKEN_SECRET)
 
   const user = await User.findById(decoded.id)
 

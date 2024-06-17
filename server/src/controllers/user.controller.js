@@ -56,7 +56,6 @@ export const followUnfollowedUser = catchAsync(async (req, res, next) => {
     currentUser.following.pull(user._id)
     user.followers.pull(currentUser._id)
 
-    await Promise.all([user.save(), currentUser.save()])
     // await Promise.all([
     //   User.findByIdAndUpdate(user._id, {
     //     $pull: { followers: currentUser._id }

@@ -9,16 +9,8 @@ import {
 } from './factory.handler'
 import { catchAsync } from '~/utils/catchAsync'
 import { ApiError } from '~/utils/ApiError'
-import fs from 'fs'
-import util from 'util'
-import path from 'path'
-import { cloudinary } from '~/utils/cloudinary'
-import { filterObj } from '~/utils/filterObject'
+import { cloudinary } from '~/config/cloudinary'
 import { Notification } from '~/models/notification.model'
-
-const writeFile = util.promisify(fs.writeFile)
-
-// Unprotected user
 
 // Protected user
 export const getMe = (req, res, next) => {
@@ -37,6 +29,14 @@ export const getUserProfile = catchAsync(async (req, res, next) => {
   }
 
   res.status(200).json({ status: 'success', user })
+})
+
+export const getSuggestedUser = catchAsync(async (req, res, next) => {
+  const users = await User.find({
+    _id: { $ne: req.user._id, $nin: req.user.following }
+  }).limit(4)
+
+  res.status(200).json({ status: 'success', users })
 })
 
 export const followUnfollowUser = catchAsync(async (req, res, next) => {
@@ -90,48 +90,83 @@ export const followUnfollowUser = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success' })
 })
 
-export const updatePassword = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user.id).select('+password')
+export const updateUserProfile = catchAsync(async (req, res, next) => {
+  const { username, fullname, email, currentPassword, newPassword, bio, link } =
+    req.body
+  let { profileImg, coverImg } = req.body
+  const userId = req.user._id
 
-  if (!(await user.correctPassword(req.body.currentPassword))) {
-    throw new ApiError(401, 'Your current password is wrong')
+  // check if user exists
+  const user = await User.findById(userId).select('+password')
+
+  if (!user) {
+    throw new ApiError(404, 'User not found')
   }
 
-  user.password = req.body.password
-  user.passwordConfirm = req.body.passwordConfirm
-  await user.save()
+  const isEmailExist = await User.findOne({ email })
 
-  const { password: pass, ...rest } = user._doc
-
-  res.status(200).json({ status: 'success', user: rest })
-})
-
-export const updateMe = catchAsync(async (req, res, next) => {
-  if (req.body.password || req.body.passwordConfirm) {
-    throw new ApiError(400, 'This route is not for password updates')
+  if (isEmailExist && isEmailExist._id.toString() !== userId.toString()) {
+    throw new ApiError(400, 'Email already exists')
   }
 
-  const filteredBody = filterObj(req.body, 'name', 'email')
+  // change password
+  if ((!currentPassword && newPassword) || (currentPassword && !newPassword)) {
+    throw new ApiError(400, 'Please provide both current and new password')
+  }
 
-  if (req.file) {
-    const tempFilePath = path.join(__dirname, req.file.originalname)
-    await writeFile(tempFilePath, req.file.buffer)
+  if (currentPassword && newPassword) {
+    if (!(await user.correctPassword(currentPassword))) {
+      throw new ApiError(401, 'Your current password is wrong')
+    }
 
-    const result = await cloudinary.uploader.upload(tempFilePath, {
+    user.password = newPassword
+  }
+
+  // change profileImg and coverImg
+  if (profileImg) {
+    if (user.profileImg) {
+      await cloudinary.uploader.destroy(
+        user.profileImg_publicId ||
+          user.profileImg.split('/').pop().split('.')[0]
+      )
+    }
+
+    const result = await cloudinary.uploader.upload(profileImg, {
       folder: 'file-upload'
     })
 
-    fs.unlinkSync(tempFilePath)
-    filteredBody.photo = result.secure_url
-    filteredBody.photo_publicId = result.public_id
+    user.profileImg = result.secure_url
+    user.profileImg_publicId = result.public_id
   }
 
-  const user = await User.findByIdAndUpdate(req.user.id, filteredBody, {
-    new: true,
-    runValidators: true
-  })
+  if (coverImg) {
+    if (user.coverImg) {
+      await cloudinary.uploader.destroy(
+        user.coverImg_publicId || user.coverImg.split('/').pop().split('.')[0]
+      )
+    }
 
-  res.status(200).json({ status: 'success', data: { user } })
+    const result = await cloudinary.uploader.upload(coverImg, {
+      folder: 'file-upload'
+    })
+
+    user.coverImg = result.secure_url
+    user.coverImg_publicId = result.public_id
+  }
+
+  // update other fields
+  user.username = username || user.username
+  user.fullname = fullname || user.fullname
+  user.email = email || user.email
+  user.bio = bio || user.bio
+  user.link = link || user.link
+
+  // save user
+  await user.save()
+
+  const { password, ...rest } = user._doc
+
+  res.status(200).json({ status: 'success', user: rest })
 })
 
 // Admin

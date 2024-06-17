@@ -10,11 +10,11 @@ import {
 
 const router = Router()
 
-router.route('/register').post(register)
-router.route('/login').post(login)
-router.route('/logout').post(logout)
-router.route('/refresh-token').post(refreshToken)
-router.route('/forgotPassword').post(forgotPassword)
-router.route('/resetPassword').patch(resetPassword)
+router.post('/register', register)
+router.post('/login', login)
+router.post('/logout', logout)
+router.post('/refresh-token', refreshToken)
+router.post('/forgotPassword', forgotPassword)
+router.patch('/resetPassword', resetPassword)
 
 export default router

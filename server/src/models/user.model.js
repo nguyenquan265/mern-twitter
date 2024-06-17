@@ -41,20 +41,16 @@ const userSchema = new mongoose.Schema({
     }
   ],
   profileImg: {
-    type: String,
-    default: 'default.jpg'
+    type: String
   },
   profileImg_publicId: {
-    type: String,
-    default: ''
+    type: String
   },
   coverImg: {
-    type: String,
-    default: 'default-cover.jpg'
+    type: String
   },
   coverImg_publicId: {
-    type: String,
-    default: ''
+    type: String
   },
   bio: {
     type: String,
@@ -72,11 +68,6 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date
-  // active: {
-  //   type: Boolean,
-  //   default: true,
-  //   select: false
-  // }
 })
 
 // Encrypt password before saving

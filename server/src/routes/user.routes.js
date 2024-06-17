@@ -6,28 +6,23 @@ import {
   updateUser,
   deleteUser,
   getMe,
-  updateMe,
-  updatePassword,
   getUserProfile,
-  followUnfollowUser
+  followUnfollowUser,
+  getSuggestedUser,
+  updateUserProfile
 } from '~/controllers/user.controller'
 import { protect, restrictTo } from '~/middlewares/auth.middleware'
-import { upload } from '~/utils/cloudinary'
 
 const router = Router()
-
-// Unprotected user routes
 
 router.use(protect)
 
 // Protected user routes
-router.route('/me').get(getMe, getUser)
-router.route('/profile/:username').get(getUserProfile)
-// router.route('/suggested').get(getUserProfile)
-router.route('/follow/:id').post(followUnfollowUser)
-// router.post('/update').post(updateUserProfile)
-// router.route('/updateMyPassword').patch(updatePassword)
-// router.route('/updateMe').patch(upload.single('photo'), updateMe)
+router.get('/me', getMe, getUser)
+router.get('/profile/:username', getUserProfile)
+router.get('/suggested', getSuggestedUser)
+router.patch('/follow/:id', followUnfollowUser)
+router.patch('/updateMe', updateUserProfile)
 
 // Admin routes
 router.use(restrictTo('admin'))

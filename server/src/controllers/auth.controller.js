@@ -18,7 +18,7 @@ export const register = catchAsync(async (req, res, next) => {
     throw new ApiError(400, 'Please provide all fields')
   }
 
-  const user = await User.create({ username, email, password })
+  const user = await User.create({ username, fullname, email, password })
 
   const { password: pass, ...rest } = user._doc
 

@@ -17,17 +17,72 @@ import { filterObj } from '~/utils/filterObject'
 
 const writeFile = util.promisify(fs.writeFile)
 
-export const getAllUsers = getAll(User)
-export const getUser = getOne(User)
-export const createUser = createOne(User)
-export const updateUser = updateOne(User)
-export const deleteUser = deleteOne(User)
+// Unprotected user
 
+// Protected user
 export const getMe = (req, res, next) => {
   req.params.id = req.user.id
 
   next()
 }
+
+export const getUserProfile = catchAsync(async (req, res, next) => {
+  const { username } = req.params
+
+  const user = await User.findOne({ username })
+
+  if (!user) {
+    throw new ApiError(404, 'User not found')
+  }
+
+  res.status(200).json({ status: 'success', user })
+})
+
+export const followUnfollowedUser = catchAsync(async (req, res, next) => {
+  const [user, currentUser] = await Promise.all([
+    User.findById(req.params.id),
+    User.findById(req.user.id)
+  ])
+
+  if (!user || !currentUser) {
+    throw new ApiError(404, 'User not found')
+  }
+
+  if (currentUser._id.equals(user._id)) {
+    throw new ApiError(400, 'You cannot follow/unfollow yourself')
+  }
+
+  if (currentUser.following.includes(user._id)) {
+    currentUser.following.pull(user._id)
+    user.followers.pull(currentUser._id)
+
+    await Promise.all([user.save(), currentUser.save()])
+    // await Promise.all([
+    //   User.findByIdAndUpdate(user._id, {
+    //     $pull: { followers: currentUser._id }
+    //   }),
+    //   User.findByIdAndUpdate(currentUser._id, {
+    //     $pull: { following: user._id }
+    //   })
+    // ])
+  } else {
+    currentUser.following.push(user._id)
+    user.followers.push(currentUser._id)
+
+    // await Promise.all([
+    //   User.findByIdAndUpdate(user._id, {
+    //     $push: { followers: currentUser._id }
+    //   }),
+    //   User.findByIdAndUpdate(currentUser._id, {
+    //     $push: { following: user._id }
+    //   })
+    // ])
+  }
+
+  await Promise.all([user.save(), currentUser.save()])
+
+  res.status(200).json({ status: 'success' })
+})
 
 export const updatePassword = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id).select('+password')
@@ -72,3 +127,10 @@ export const updateMe = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ status: 'success', data: { user } })
 })
+
+// Admin
+export const getAllUsers = getAll(User)
+export const getUser = getOne(User)
+export const createUser = createOne(User)
+export const updateUser = updateOne(User)
+export const deleteUser = deleteOne(User)

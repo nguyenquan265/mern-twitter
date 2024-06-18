@@ -105,24 +105,71 @@ export const likeUnlikePost = catchAsync(async (req, res, next) => {
   const isLiked = post.likes.includes(req.user._id)
 
   if (isLiked) {
-    await Post.findByIdAndUpdate(req.params.id, {
-      $pull: { likes: req.user._id }
-    })
+    post.likes.pull(req.user._id)
+
+    await Promise.all([
+      post.save(),
+      User.findByIdAndUpdate(req.user._id, {
+        $pull: { likedPosts: req.params.id }
+      })
+    ])
 
     res.status(200).json({ status: 'success' })
   } else {
     post.likes.push(req.user._id)
 
-    await post.save()
-
-    await Notification.create({
-      from: req.user._id,
-      to: post.user,
-      type: 'like'
-    })
+    await Promise.all([
+      post.save(),
+      User.findByIdAndUpdate(req.user._id, {
+        $push: { likedPosts: req.params.id }
+      }),
+      Notification.create({
+        from: req.user._id,
+        to: post.user,
+        type: 'like'
+      })
+    ])
 
     res.status(200).json({ status: 'success', post })
   }
+})
+
+export const getLikedPosts = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.params.id)
+
+  if (!user) {
+    throw new ApiError(404, 'User not found')
+  }
+
+  const posts = await Post.find({ _id: { $in: user.likedPosts } })
+
+  res.status(200).json({ status: 'success', posts })
+})
+
+export const getFollowingPosts = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user._id)
+
+  if (!user) {
+    throw new ApiError(404, 'User not found')
+  }
+
+  const followingList = user.following
+
+  const posts = await Post.find({ user: { $in: followingList } }).sort(-1)
+
+  res.status(200).json({ status: 'success', posts })
+})
+
+export const getUserPosts = catchAsync(async (req, res, next) => {
+  const user = await User.findOne({ username: req.params.username })
+
+  if (!user) {
+    throw new ApiError(404, 'User not found')
+  }
+
+  const posts = await Post.find({ user: user._id })
+
+  res.status(200).json({ status: 'success', posts })
 })
 
 // Admin

@@ -6,7 +6,10 @@ import {
   deletePost,
   deletePostByUser,
   getAllPosts,
+  getFollowingPosts,
+  getLikedPosts,
   getPost,
+  getUserPosts,
   likeUnlikePost,
   updatePost
 } from '~/controllers/post.controller'
@@ -17,6 +20,10 @@ const router = Router()
 router.use(protect)
 
 // Protected post routes
+router.get('/all', getAllPosts)
+router.get('/following', getFollowingPosts)
+router.get('/likes/:id', getLikedPosts)
+router.get('/user/:username', getUserPosts)
 router.post('/create', createPostByUser)
 router.patch('/like/:id', likeUnlikePost)
 router.post('/comment/:id', commentOnPost)

@@ -27,4 +27,11 @@ const notificationSchema = new mongoose.Schema(
   }
 )
 
+// populate user from
+notificationSchema.pre(/^find/, function (next) {
+  this.populate({ path: 'from', select: 'username profileImg' })
+
+  next()
+})
+
 export const Notification = mongoose.model('Notification', notificationSchema)

@@ -33,4 +33,17 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+// populate user
+postSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user',
+    select: 'username fullname img'
+  }).populate({
+    path: 'comments.user',
+    select: 'username fullname img'
+  })
+
+  next()
+})
+
 export const Post = mongoose.model('Post', postSchema)

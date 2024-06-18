@@ -3,72 +3,77 @@ import validator from 'validator'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    unique: true,
-    required: [true, 'Username is required']
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      unique: true,
+      required: [true, 'Username is required']
+    },
+    fullname: {
+      type: String,
+      required: [true, 'Fullname is required']
+    },
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, 'Please provide a valid email']
+    },
+    password: {
+      type: String,
+      required: [true, 'Password is required'],
+      minlength: 6,
+      select: false
+    },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+      }
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+      }
+    ],
+    profileImg: {
+      type: String
+    },
+    profileImg_publicId: {
+      type: String
+    },
+    coverImg: {
+      type: String
+    },
+    coverImg_publicId: {
+      type: String
+    },
+    bio: {
+      type: String,
+      default: ''
+    },
+    link: {
+      type: String,
+      default: ''
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date
   },
-  fullname: {
-    type: String,
-    required: [true, 'Fullname is required']
-  },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    validate: [validator.isEmail, 'Please provide a valid email']
-  },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: 6,
-    select: false
-  },
-  followers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: []
-    }
-  ],
-  following: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: []
-    }
-  ],
-  profileImg: {
-    type: String
-  },
-  profileImg_publicId: {
-    type: String
-  },
-  coverImg: {
-    type: String
-  },
-  coverImg_publicId: {
-    type: String
-  },
-  bio: {
-    type: String,
-    default: ''
-  },
-  link: {
-    type: String,
-    default: ''
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date
-})
+  {
+    timestamps: true
+  }
+)
 
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {

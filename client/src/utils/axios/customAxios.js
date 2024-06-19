@@ -6,47 +6,45 @@ const customAxios = axios.create({
   baseURL: 'http://localhost:8000/api/v1'
 })
 
-// customAxios.interceptors.request.use(
-//   (config) => {
-//     const accessToken = localStorage.getItem('accessToken')
+customAxios.interceptors.request.use(
+  (config) => {
+    const accessToken = localStorage.getItem('accessToken')
 
-//     if (accessToken) {
-//       config.headers.Authorization = `Bearer ${accessToken}`
-//     }
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
 
-//     return config
-//   },
-//   (error) => Promise.reject(error)
-// )
+    return config
+  },
+  (error) => Promise.reject(error)
+)
 
-// customAxios.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config
+customAxios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
 
-//     if (error.response.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
 
-//       try {
-//         const res = await axios.post(
-//           'http://localhost:8000/api/v1/auth/refresh-token'
-//         )
-//         const { accessToken } = res.data
+      try {
+        const res = await axios.post(
+          'http://localhost:8000/api/v1/auth/refresh-token'
+        )
+        const { accessToken } = res.data
 
-//         localStorage.setItem('accessToken', accessToken)
+        localStorage.setItem('accessToken', accessToken)
 
-//         originalRequest.headers.Authorization = `Bearer ${accessToken}`
-//         return axios(originalRequest)
-//       } catch (error) {
-//         await axios.post('http://localhost:8000/api/v1/auth/logout')
-//         store.dispatch(logoutUser()) // clear redux state user
-//         toast.warn('Please log in to access this page.') // notify to user
-//         return
-//       }
-//     }
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`
+        return axios(originalRequest)
+      } catch (error) {
+        await axios.post('http://localhost:8000/api/v1/auth/logout')
+        localStorage.removeItem('accessToken')
+      }
+    }
 
-//     return Promise.reject(error)
-//   }
-// )
+    return Promise.reject(error)
+  }
+)
 
 export default customAxios

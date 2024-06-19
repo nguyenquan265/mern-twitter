@@ -5,15 +5,16 @@ import XSvg from '../../../components/svgs/X'
 
 import { MdOutlineMail } from 'react-icons/md'
 import { MdPassword } from 'react-icons/md'
-import { useMutation } from '@tanstack/react-query'
+import { QueryClient, useMutation } from '@tanstack/react-query'
 import customAxios from '../../../utils/axios/customAxios'
-import toast from 'react-hot-toast'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   })
+
+  const queryClient = new QueryClient()
 
   const {
     mutate: login,
@@ -28,7 +29,7 @@ const LoginPage = () => {
           password
         })
 
-        console.log('res: ', res)
+        localStorage.setItem('accessToken', res.data.accessToken)
 
         return res.data
       } catch (error) {
@@ -37,7 +38,7 @@ const LoginPage = () => {
       }
     },
     onSuccess: () => {
-      toast.success('Logged in successfully')
+      queryClient.invalidateQueries({ queryKey: ['authUser'] })
     }
   })
 

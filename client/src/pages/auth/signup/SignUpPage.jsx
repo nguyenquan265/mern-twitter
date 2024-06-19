@@ -7,9 +7,8 @@ import { MdOutlineMail } from 'react-icons/md'
 import { FaUser } from 'react-icons/fa'
 import { MdPassword } from 'react-icons/md'
 import { MdDriveFileRenameOutline } from 'react-icons/md'
-import { useMutation } from '@tanstack/react-query'
+import { QueryClient, useMutation } from '@tanstack/react-query'
 import customAxios from '../../../utils/axios/customAxios'
-import toast from 'react-hot-toast'
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +17,8 @@ const SignUpPage = () => {
     fullname: '',
     password: ''
   })
+
+  const queryClient = new QueryClient()
 
   const {
     mutate: signup,
@@ -34,7 +35,7 @@ const SignUpPage = () => {
           password
         })
 
-        console.log('res: ', res)
+        localStorage.setItem('accessToken', res.data.accessToken)
 
         return res.data
       } catch (error) {
@@ -43,7 +44,7 @@ const SignUpPage = () => {
       }
     },
     onSuccess: () => {
-      toast.success('Account created successfully')
+      queryClient.invalidateQueries({ queryKey: ['authUser'] })
     }
   })
 

@@ -10,15 +10,12 @@ import customAxios from '../../utils/axios/customAxios'
 import toast from 'react-hot-toast'
 
 const Sidebar = () => {
-  const {
-    mutate: logout,
-    isError,
-    isPending,
-    error
-  } = useMutation({
+  const { mutate: logout } = useMutation({
     mutationFn: async () => {
       try {
         await customAxios.post('/auth/logout')
+
+        localStorage.removeItem('accessToken')
       } catch (error) {
         console.log('error: ', error)
         throw new Error(error?.response?.data?.message || error.message)
@@ -26,6 +23,9 @@ const Sidebar = () => {
     },
     onSuccess: () => {
       toast.success('Logged out successfully')
+    },
+    onError: () => {
+      toast.error('An error occurred')
     }
   })
 

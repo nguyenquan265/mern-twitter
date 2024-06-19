@@ -19,12 +19,10 @@ const App = () => {
       try {
         const res = await customAxios('/users/me')
 
-        console.log('res: ', res)
-
-        return res.data
+        return res.data.data
       } catch (error) {
         console.log('error: ', error)
-        throw new Error(error?.response?.data?.message || error.message)
+        return null
       }
     },
     retry: false
@@ -38,9 +36,11 @@ const App = () => {
     )
   }
 
+  console.log('authUser: ', authUser)
+
   return (
     <div className='flex max-w-6xl mx-auto'>
-      <Sidebar />
+      {authUser && <Sidebar />}
       <Routes>
         <Route
           index
@@ -64,7 +64,7 @@ const App = () => {
           element={authUser ? <ProfilePage /> : <Navigate to='/login' />}
         />
       </Routes>
-      <RightPanel />
+      {authUser && <RightPanel />}
       <Toaster />
     </div>
   )

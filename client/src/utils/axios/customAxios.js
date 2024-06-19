@@ -1,9 +1,11 @@
 import axios from 'axios'
 
+const url = 'http://localhost:8000/api/v1'
+
 axios.defaults.withCredentials = true
 
 const customAxios = axios.create({
-  baseURL: 'http://localhost:8000/api/v1'
+  baseURL: url
 })
 
 customAxios.interceptors.request.use(
@@ -28,9 +30,7 @@ customAxios.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const res = await axios.post(
-          'http://localhost:8000/api/v1/auth/refresh-token'
-        )
+        const res = await axios.post(`${url}/auth/refresh-token`)
         const { accessToken } = res.data
 
         localStorage.setItem('accessToken', accessToken)
@@ -38,8 +38,9 @@ customAxios.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
         return axios(originalRequest)
       } catch (error) {
-        await axios.post('http://localhost:8000/api/v1/auth/logout')
+        await axios.post(`${url}/auth/logout`)
         localStorage.removeItem('accessToken')
+        throw error
       }
     }
 

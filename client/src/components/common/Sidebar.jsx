@@ -5,8 +5,30 @@ import { IoNotifications } from 'react-icons/io5'
 import { FaUser } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { BiLogOut } from 'react-icons/bi'
+import { useMutation } from '@tanstack/react-query'
+import customAxios from '../../utils/axios/customAxios'
+import toast from 'react-hot-toast'
 
 const Sidebar = () => {
+  const {
+    mutate: logout,
+    isError,
+    isPending,
+    error
+  } = useMutation({
+    mutationFn: async () => {
+      try {
+        await customAxios.post('/auth/logout')
+      } catch (error) {
+        console.log('error: ', error)
+        throw new Error(error?.response?.data?.message || error.message)
+      }
+    },
+    onSuccess: () => {
+      toast.success('Logged out successfully')
+    }
+  })
+
   const data = {
     fullName: 'John Doe',
     username: 'johndoe',
@@ -66,7 +88,13 @@ const Sidebar = () => {
                 </p>
                 <p className='text-slate-500 text-sm'>@{data?.username}</p>
               </div>
-              <BiLogOut className='w-5 h-5 cursor-pointer' />
+              <BiLogOut
+                className='w-5 h-5 cursor-pointer'
+                onClick={(e) => {
+                  e.preventDefault()
+                  logout()
+                }}
+              />
             </div>
           </Link>
         )}

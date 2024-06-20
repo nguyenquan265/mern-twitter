@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import customAxios from '../../utils/axios/customAxios'
 import toast from 'react-hot-toast'
 import LoadingSpinner from './LoadingSpinner'
+import { formatPostDate } from '../../utils/locateDate/date'
 
 const Post = ({ post }) => {
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
@@ -18,7 +19,7 @@ const Post = ({ post }) => {
   const postOwner = post.user
   const isLiked = post.likes.includes(authUser._id)
   const isMyPost = authUser._id === postOwner._id
-  const formattedDate = new Date(post.createdAt).toLocaleDateString()
+  const formattedDate = formatPostDate(post.createdAt)
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -37,9 +38,9 @@ const Post = ({ post }) => {
   })
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
-    mutationFn: async (postId) => {
+    mutationFn: async () => {
       try {
-        const res = await customAxios.patch(`/posts/like/${postId}`)
+        const res = await customAxios.patch(`/posts/like/${post._id}`)
 
         return res.data.post
       } catch (error) {
@@ -62,7 +63,28 @@ const Post = ({ post }) => {
     }
   })
 
-  const { mutate: commentPost, isPending: isCommenting } = useMutation({})
+  const { mutate: commentPost, isPending: isCommenting } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await customAxios.post(`/posts/comment/${post._id}`, {
+          text: comment
+        })
+
+        return res.data.post
+      } catch (error) {
+        throw new Error(error)
+      }
+    },
+    onSuccess: () => {
+      toast.success('Comment posted successfully')
+      setComment('')
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      document.getElementById(`comments_modal${post._id}`).close()
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || error.message)
+    }
+  })
 
   const handleDeletePost = () => {
     deletePost()
@@ -70,12 +92,16 @@ const Post = ({ post }) => {
 
   const handlePostComment = (e) => {
     e.preventDefault()
+
+    if (isCommenting) return
+
+    commentPost()
   }
 
-  const handleLikePost = (postId) => {
+  const handleLikePost = () => {
     if (isLiking) return
 
-    likePost(postId)
+    likePost()
   }
 
   return (
@@ -167,7 +193,7 @@ const Post = ({ post }) => {
                         <div className='flex flex-col'>
                           <div className='flex items-center gap-1'>
                             <span className='font-bold'>
-                              {comment.user.fullName}
+                              {comment.user.fullname}
                             </span>
                             <span className='text-gray-700 text-sm'>
                               @{comment.user.username}
@@ -188,7 +214,10 @@ const Post = ({ post }) => {
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                     />
-                    <button className='btn btn-primary rounded-full btn-sm text-white px-4'>
+                    <button
+                      className='btn btn-primary rounded-full btn-sm text-white px-4'
+                      disabled={isCommenting}
+                    >
                       {isCommenting ? <LoadingSpinner /> : 'Post'}
                     </button>
                   </form>
@@ -197,15 +226,17 @@ const Post = ({ post }) => {
                   <button className='outline-none'>close</button>
                 </form>
               </dialog>
+              {/* repost */}
               <div className='flex gap-1 items-center group cursor-pointer'>
                 <BiRepost className='w-6 h-6  text-slate-500 group-hover:text-green-500' />
                 <span className='text-sm text-slate-500 group-hover:text-green-500'>
                   0
                 </span>
               </div>
+              {/* like */}
               <div
                 className='flex gap-1 items-center group cursor-pointer'
-                onClick={() => handleLikePost(post._id)}
+                onClick={handleLikePost}
               >
                 {isLiking && <LoadingSpinner size='sm' />}
 

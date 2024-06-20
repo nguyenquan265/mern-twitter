@@ -13,14 +13,15 @@ import LoadingSpinner from './LoadingSpinner'
 const Post = ({ post }) => {
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
   const queryClient = useQueryClient()
+
   const [comment, setComment] = useState('')
   const postOwner = post.user
-  const isLiked = false
+  const isLiked = post.likes.includes(authUser._id)
   const isMyPost = authUser._id === postOwner._id
   const formattedDate = new Date(post.createdAt).toLocaleDateString()
   const isCommenting = false
 
-  const { mutate: deletePost, isPending } = useMutation({
+  const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       try {
         const res = await customAxios.delete(`/posts/delete/${post._id}`)
@@ -36,6 +37,32 @@ const Post = ({ post }) => {
     }
   })
 
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: async (postId) => {
+      try {
+        const res = await customAxios.patch(`/posts/like/${postId}`)
+
+        return res.data.post
+      } catch (error) {
+        throw new Error(error)
+      }
+    },
+    onSuccess: (updatedPost) => {
+      queryClient.setQueryData(['posts'], (posts) => {
+        return posts.map((p) => {
+          if (p._id === updatedPost._id) {
+            return { ...p, likes: updatedPost.likes }
+          }
+
+          return p
+        })
+      })
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || error.message)
+    }
+  })
+
   const handleDeletePost = () => {
     deletePost()
   }
@@ -44,7 +71,11 @@ const Post = ({ post }) => {
     e.preventDefault()
   }
 
-  const handleLikePost = () => {}
+  const handleLikePost = (postId) => {
+    if (isLiking) return
+
+    likePost(postId)
+  }
 
   return (
     <>
@@ -71,14 +102,14 @@ const Post = ({ post }) => {
             </span>
             {isMyPost && (
               <span className='flex justify-end flex-1'>
-                {!isPending && (
+                {!isDeleting && (
                   <FaTrash
                     className='cursor-pointer hover:text-red-500'
                     onClick={handleDeletePost}
                   />
                 )}
 
-                {isPending && <LoadingSpinner size='sm' />}
+                {isDeleting && <LoadingSpinner size='sm' />}
               </span>
             )}
           </div>
@@ -157,11 +188,7 @@ const Post = ({ post }) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className='btn btn-primary rounded-full btn-sm text-white px-4'>
-                      {isCommenting ? (
-                        <span className='loading loading-spinner loading-md'></span>
-                      ) : (
-                        'Post'
-                      )}
+                      {isCommenting ? <LoadingSpinner /> : 'Post'}
                     </button>
                   </form>
                 </div>
@@ -177,12 +204,14 @@ const Post = ({ post }) => {
               </div>
               <div
                 className='flex gap-1 items-center group cursor-pointer'
-                onClick={handleLikePost}
+                onClick={() => handleLikePost(post._id)}
               >
-                {!isLiked && (
+                {isLiking && <LoadingSpinner size='sm' />}
+
+                {!isLiked && !isLiking && (
                   <FaRegHeart className='w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500' />
                 )}
-                {isLiked && (
+                {isLiked && !isLiking && (
                   <FaRegHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />
                 )}
 

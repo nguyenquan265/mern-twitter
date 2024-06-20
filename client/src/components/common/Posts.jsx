@@ -24,7 +24,7 @@ const Posts = ({ feedType }) => {
     refetch,
     isRefetching
   } = useQuery({
-    queryKey: ['posts', feedType],
+    queryKey: ['posts'],
     queryFn: async () => {
       try {
         const res = await customAxios(POST_ENDPOINT)
@@ -40,9 +40,9 @@ const Posts = ({ feedType }) => {
     }
   })
 
-  // useEffect(() => {
-  //   refetch()
-  // }, [feedType, refetch])
+  useEffect(() => {
+    refetch()
+  }, [feedType, refetch])
 
   return (
     <>

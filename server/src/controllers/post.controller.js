@@ -113,8 +113,6 @@ export const likeUnlikePost = catchAsync(async (req, res, next) => {
         $pull: { likedPosts: req.params.id }
       })
     ])
-
-    res.status(200).json({ status: 'success' })
   } else {
     post.likes.push(req.user._id)
 
@@ -129,9 +127,9 @@ export const likeUnlikePost = catchAsync(async (req, res, next) => {
         type: 'like'
       })
     ])
-
-    res.status(200).json({ status: 'success', post })
   }
+
+  res.status(200).json({ status: 'success', post })
 })
 
 export const getLikedPosts = catchAsync(async (req, res, next) => {

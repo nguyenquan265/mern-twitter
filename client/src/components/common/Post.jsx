@@ -17,7 +17,7 @@ const Post = ({ post }) => {
   const postOwner = post.user
   const isLiked = false
   const isMyPost = authUser._id === postOwner._id
-  const formattedDate = '1h'
+  const formattedDate = new Date(post.createdAt).toLocaleDateString()
   const isCommenting = false
 
   const { mutate: deletePost, isPending } = useMutation({

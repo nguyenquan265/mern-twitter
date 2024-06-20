@@ -40,49 +40,49 @@ export const getSuggestedUser = catchAsync(async (req, res, next) => {
 })
 
 export const followUnfollowUser = catchAsync(async (req, res, next) => {
-  const [user, currentUser] = await Promise.all([
+  const [userToFollow, currentUser] = await Promise.all([
     User.findById(req.params.id),
-    User.findById(req.user.id)
+    User.findById(req.user._id)
   ])
 
-  if (!user || !currentUser) {
+  if (!userToFollow || !currentUser) {
     throw new ApiError(404, 'User not found')
   }
 
-  if (currentUser._id.equals(user._id)) {
+  if (currentUser._id.equals(userToFollow._id)) {
     throw new ApiError(400, 'You cannot follow/unfollow yourself')
   }
 
-  if (currentUser.following.includes(user._id)) {
-    currentUser.following.pull(user._id)
-    user.followers.pull(currentUser._id)
+  if (currentUser.following.includes(userToFollow._id)) {
+    currentUser.following.pull(userToFollow._id)
+    userToFollow.followers.pull(currentUser._id)
 
-    await Promise.all([user.save(), currentUser.save()])
+    await Promise.all([userToFollow.save(), currentUser.save()])
     // await Promise.all([
-    //   User.findByIdAndUpdate(user._id, {
+    //   User.findByIdAndUpdate(userToFollow._id, {
     //     $pull: { followers: currentUser._id }
     //   }),
     //   User.findByIdAndUpdate(currentUser._id, {
-    //     $pull: { following: user._id }
+    //     $pull: { following: userToFollow._id }
     //   })
     // ])
   } else {
-    currentUser.following.push(user._id)
-    user.followers.push(currentUser._id)
+    currentUser.following.push(userToFollow._id)
+    userToFollow.followers.push(currentUser._id)
 
-    await Promise.all([user.save(), currentUser.save()])
+    await Promise.all([userToFollow.save(), currentUser.save()])
 
     await Notification.create({
       from: currentUser._id,
-      to: user._id,
+      to: userToFollow._id,
       type: 'follow'
     })
     // await Promise.all([
-    //   User.findByIdAndUpdate(user._id, {
+    //   User.findByIdAndUpdate(userToFollow._id, {
     //     $push: { followers: currentUser._id }
     //   }),
     //   User.findByIdAndUpdate(currentUser._id, {
-    //     $push: { following: user._id }
+    //     $push: { following: userToFollow._id }
     //   })
     // ])
   }

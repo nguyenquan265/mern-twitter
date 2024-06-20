@@ -36,8 +36,6 @@ const App = () => {
     )
   }
 
-  console.log('authUser: ', authUser)
-
   return (
     <div className='flex max-w-6xl mx-auto'>
       {authUser && <Sidebar />}

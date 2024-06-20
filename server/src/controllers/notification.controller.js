@@ -11,7 +11,9 @@ import { ApiError } from '~/utils/ApiError'
 
 // Protected notification
 export const getNotificationsFromUser = catchAsync(async (req, res, next) => {
-  const notifications = await Notification.find({ to: req.user._id })
+  const notifications = await Notification.find({ to: req.user._id }).sort({
+    createdAt: -1
+  })
 
   await Notification.updateMany({ to: req.user._id }, { read: true })
 

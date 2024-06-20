@@ -19,12 +19,6 @@ export const createPostByUser = catchAsync(async (req, res, next) => {
   let { img } = req.body
   let img_publicId = null
 
-  const user = await User.findById(req.user._id)
-
-  if (!user) {
-    throw new ApiError(404, 'User not found')
-  }
-
   if (!text && !img) {
     throw new ApiError(400, 'Text or image is required')
   }
@@ -145,13 +139,7 @@ export const getLikedPosts = catchAsync(async (req, res, next) => {
 })
 
 export const getFollowingPosts = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user._id)
-
-  if (!user) {
-    throw new ApiError(404, 'User not found')
-  }
-
-  const followingList = user.following
+  const followingList = req.user.following
 
   const posts = await Post.find({ user: { $in: followingList } }).sort({
     createdAt: -1

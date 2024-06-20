@@ -40,10 +40,8 @@ export const getSuggestedUser = catchAsync(async (req, res, next) => {
 })
 
 export const followUnfollowUser = catchAsync(async (req, res, next) => {
-  const [userToFollow, currentUser] = await Promise.all([
-    User.findById(req.params.id),
-    User.findById(req.user._id)
-  ])
+  const userToFollow = await User.findById(req.params.id)
+  const currentUser = req.user
 
   if (!userToFollow || !currentUser) {
     throw new ApiError(404, 'User not found')

@@ -19,7 +19,6 @@ const Post = ({ post }) => {
   const isLiked = post.likes.includes(authUser._id)
   const isMyPost = authUser._id === postOwner._id
   const formattedDate = new Date(post.createdAt).toLocaleDateString()
-  const isCommenting = false
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -62,6 +61,8 @@ const Post = ({ post }) => {
       toast.error(error?.response?.data?.message || error.message)
     }
   })
+
+  const { mutate: commentPost, isPending: isCommenting } = useMutation({})
 
   const handleDeletePost = () => {
     deletePost()

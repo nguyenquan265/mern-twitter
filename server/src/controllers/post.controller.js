@@ -155,7 +155,9 @@ export const getFollowingPosts = catchAsync(async (req, res, next) => {
 
   const followingList = user.following
 
-  const posts = await Post.find({ user: { $in: followingList } }).sort(-1)
+  const posts = await Post.find({ user: { $in: followingList } }).sort({
+    createdAt: -1
+  })
 
   res.status(200).json({ status: 'success', posts })
 })

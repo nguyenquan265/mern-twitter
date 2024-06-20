@@ -55,7 +55,7 @@ export const deletePostByUser = catchAsync(async (req, res, next) => {
     throw new ApiError(404, 'Post not found')
   }
 
-  if (post.user.toString() !== req.user._id.toString()) {
+  if (post.user._id.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You are not authorized to delete this post')
   }
 

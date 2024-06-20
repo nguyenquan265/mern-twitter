@@ -133,7 +133,9 @@ export const getLikedPosts = catchAsync(async (req, res, next) => {
     throw new ApiError(404, 'User not found')
   }
 
-  const posts = await Post.find({ _id: { $in: user.likedPosts } })
+  const posts = await Post.find({ _id: { $in: user.likedPosts } }).sort({
+    updatedAt: -1
+  })
 
   res.status(200).json({ status: 'success', posts })
 })
@@ -149,7 +151,9 @@ export const getFollowingPosts = catchAsync(async (req, res, next) => {
 })
 
 export const getUserPosts = catchAsync(async (req, res, next) => {
-  const user = await User.findOne({ username: req.params.username })
+  const user = await User.findOne({ username: req.params.username }).sort({
+    createdAt: -1
+  })
 
   if (!user) {
     throw new ApiError(404, 'User not found')

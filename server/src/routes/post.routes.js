@@ -22,7 +22,7 @@ router.use(protect)
 // Protected post routes
 router.get('/all', getAllPosts)
 router.get('/following', getFollowingPosts)
-router.get('/likes/:id', getLikedPosts)
+router.get('/liked/:id', getLikedPosts)
 router.get('/user/:username', getUserPosts)
 router.post('/create', createPostByUser)
 router.patch('/like/:id', likeUnlikePost)

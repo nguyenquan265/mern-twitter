@@ -4,13 +4,17 @@ import { useQuery } from '@tanstack/react-query'
 import customAxios from '../../utils/axios/customAxios'
 import { useEffect } from 'react'
 
-const Posts = ({ feedType }) => {
+const Posts = ({ feedType, username, userId }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case 'forYou':
         return '/posts/all'
       case 'following':
         return '/posts/following'
+      case 'posts':
+        return `/posts/user/${username}`
+      case 'likes':
+        return `/posts/liked/${userId}`
       default:
         return '/posts/all'
     }
@@ -42,7 +46,7 @@ const Posts = ({ feedType }) => {
 
   useEffect(() => {
     refetch()
-  }, [feedType, refetch])
+  }, [feedType, refetch, username])
 
   return (
     <>

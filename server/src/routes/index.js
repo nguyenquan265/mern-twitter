@@ -7,6 +7,9 @@ import postRouter from './post.routes'
 import notificationRouter from './notification.routes'
 import { ApiError } from '~/utils/ApiError'
 
+router.use('/check', (req, res) => {
+  res.status(200).json({ status: 'success', message: 'Server is running' })
+})
 router.use('/auth', authRouter)
 router.use('/users', userRouter)
 router.use('/posts', postRouter)

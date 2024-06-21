@@ -1,10 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import customAxios from '../../utils/axios/customAxios'
-import toast from 'react-hot-toast'
+import useUpdateUserProfile from '../../hooks/useUpdateUserProfile'
 
 const EditProfileModal = ({ authUser }) => {
-  const queryClient = useQueryClient()
   const [formData, setFormData] = useState({
     fullname: '',
     username: '',
@@ -19,27 +16,7 @@ const EditProfileModal = ({ authUser }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: async () => {
-      try {
-        const res = await customAxios.patch('/users/updateMe', formData)
-
-        return res.data.user
-      } catch (error) {
-        throw new Error(error)
-      }
-    },
-    onSuccess: () => {
-      toast.success('Profile updated successfully')
-      Promise.all([
-        queryClient.invalidateQueries(['authUser']),
-        queryClient.invalidateQueries(['userProfile'])
-      ])
-    },
-    onError: (error) => {
-      toast.error(error?.response?.data?.message || error.message)
-    }
-  })
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
 
   useEffect(() => {
     if (authUser) {
@@ -72,7 +49,7 @@ const EditProfileModal = ({ authUser }) => {
             className='flex flex-col gap-4'
             onSubmit={(e) => {
               e.preventDefault()
-              updateProfile()
+              updateProfile(formData)
             }}
           >
             <div className='flex flex-wrap gap-2'>

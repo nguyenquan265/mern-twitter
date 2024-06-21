@@ -5,20 +5,17 @@ import Posts from '../../components/common/Posts'
 import ProfileHeaderSkeleton from '../../components/skeletons/ProfileHeaderSkeleton'
 import EditProfileModal from './EditProfileModal'
 
-import { POSTS } from '../../utils/db/dummy'
-
 import { FaArrowLeft } from 'react-icons/fa6'
 import { IoCalendarOutline } from 'react-icons/io5'
 import { FaLink } from 'react-icons/fa'
 import { MdEdit } from 'react-icons/md'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import customAxios from '../../utils/axios/customAxios'
 import { formatMemberSinceDate } from '../../utils/locateDate/date'
 import useFollow from '../../hooks/useFollow'
-import toast from 'react-hot-toast'
+import useUpdateUserProfile from '../../hooks/useUpdateUserProfile'
 
 const ProfilePage = () => {
-  const queryClient = useQueryClient()
   const [coverImg, setCoverImg] = useState(null)
   const [profileImg, setProfileImg] = useState(null)
   const [feedType, setFeedType] = useState('posts')
@@ -47,30 +44,7 @@ const ProfilePage = () => {
     }
   })
 
-  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: async () => {
-      try {
-        const res = await customAxios.patch('/users/updateMe', {
-          profileImg,
-          coverImg
-        })
-
-        return res.data.user
-      } catch (error) {
-        throw new Error(error)
-      }
-    },
-    onSuccess: () => {
-      toast.success('Profile updated successfully')
-      Promise.all([
-        queryClient.invalidateQueries(['authUser']),
-        queryClient.invalidateQueries(['userProfile'])
-      ])
-    },
-    onError: (error) => {
-      toast.error(error?.response?.data?.message || error.message)
-    }
-  })
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
 
   const isMyProfile = authUser._id === user?._id
   const AmIFollowing = authUser.following.includes(user?._id)
@@ -108,9 +82,6 @@ const ProfilePage = () => {
                 </Link>
                 <div className='flex flex-col'>
                   <p className='font-bold text-lg'>{user?.fullname}</p>
-                  <span className='text-sm text-slate-500'>
-                    {POSTS?.length} posts
-                  </span>
                 </div>
               </div>
               {/* COVER IMG */}
@@ -181,7 +152,12 @@ const ProfilePage = () => {
                   <button
                     className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
                     disabled={isUpdatingProfile}
-                    onClick={() => updateProfile()}
+                    onClick={() => {
+                      updateProfile({
+                        profileImg,
+                        coverImg
+                      })
+                    }}
                   >
                     {isUpdatingProfile ? 'Updating...' : 'update'}
                   </button>

@@ -70,9 +70,17 @@ export const login = catchAsync(async (req, res, next) => {
 })
 
 export const logout = catchAsync(async (req, res, next) => {
-  res.clearCookie('refreshToken')
+  // res.clearCookie('refreshToken')
 
-  res.status(200).json({ status: 'success' })
+  res
+    .status(200)
+    .cookie('refreshToken', 'logout', {
+      expire: new Date(Date.now()),
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    })
+    .json({ status: 'success' })
 })
 
 export const refreshToken = catchAsync(async (req, res, next) => {

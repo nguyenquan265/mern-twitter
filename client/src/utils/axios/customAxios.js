@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const url = 'http://localhost:8000/api/v1'
+const url = 'https://mern-twitter-dd71.onrender.com/api/v1'
 
 axios.defaults.withCredentials = true
 

@@ -24,6 +24,9 @@ const ProfilePage = () => {
   const { username } = useParams()
   const { follow, isPending } = useFollow()
 
+  console.log(coverImg)
+  console.log(profileImg)
+
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
 
   const {
